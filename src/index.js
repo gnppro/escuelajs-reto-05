@@ -51,8 +51,11 @@ const loadData = () => {
   if (url) {
     getData(url);
   } else {
-    // getData(API);
     console.log('Ya no hay personajes');
+    let newMessage = document.createElement('div');
+    newMessage.classList.add('Message');
+    newMessage.innerHTML = '<p style="color: red">Ya no hay personajes</p>';
+    $app.appendChild(newMessage);
   }
 };
 
@@ -71,4 +74,5 @@ intersectionObserver.observe($observe);
 
 window.unload = function() {
   localStorage.removeItem('next_fetch');
+  intersectionObserver.unobserve($observe);
 };
