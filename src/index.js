@@ -1,39 +1,43 @@
 const $app = document.getElementById('app');
 const $observe = document.getElementById('observe');
 const API = 'https://pokeapi.co/api/v2/pokemon';
+localStorage.setItem('next_fetch', API);
 
-const getData = api => {
-  fetch(api)
-    .then(response => response.json())
-    .then(async response => {
-      const nextFetch = response.next;
-      localStorage.setItem('next_fetch', nextFetch);
-      const characters = response.results;
-      let charactersDetail = characters.map(async character => {
-        let characterDetail = await getCharacter(character.url);
-        let objectCharacter = await characterDetail.json();
-        return objectCharacter;
-      });
-      let allCharactersDetail = Promise.all(charactersDetail);
-      return allCharactersDetail;
-    })
-    .then(characters => {
-      let output = characters
-        .map(character => {
-          return `
-            <article class="Card">
-              <img src="${character.sprites.front_default}" />
-              <h2>${character.name}<span>${character.id}</span></h2>
-            </article>
-          `;
-        })
-        .join('');
-      let newItem = document.createElement('section');
-      newItem.classList.add('Items');
-      newItem.innerHTML = output;
-      $app.appendChild(newItem);
-    })
-    .catch(error => console.log(error));
+const getData = async api => {
+  try {
+    let getCharactersList = await fetch(api);
+    let objectCharactersList = await getCharactersList.json();
+
+    const nextFetch = objectCharactersList.next;
+    localStorage.setItem('next_fetch', nextFetch);
+    const characters = objectCharactersList.results;
+
+    let charactersDetail = characters.map(async character => {
+      let characterDetail = await getCharacter(character.url);
+      let objectCharacter = await characterDetail.json();
+      return objectCharacter;
+    });
+
+    let allCharactersDetail = await Promise.all(charactersDetail);
+
+    let output = allCharactersDetail
+      .map(character => {
+        return `
+      <article class="Card">
+        <img src="${character.sprites.front_default}" />
+        <h2>${character.name}<span>${character.id}</span></h2>
+      </article>
+    `;
+      })
+      .join('');
+
+    let newItem = document.createElement('section');
+    newItem.classList.add('Items');
+    newItem.innerHTML = output;
+    $app.appendChild(newItem);
+  } catch (error) {
+    console.log(error);
+  }
 };
 
 const getCharacter = url => {
@@ -43,7 +47,13 @@ const getCharacter = url => {
 };
 
 const loadData = () => {
-  getData(API);
+  let url = localStorage.getItem('next_fetch');
+  if (url) {
+    getData(url);
+  } else {
+    // getData(API);
+    console.log('Ya no hay personajes');
+  }
 };
 
 const intersectionObserver = new IntersectionObserver(
